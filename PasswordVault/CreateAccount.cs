@@ -40,6 +40,7 @@ namespace PasswordVaultNS
             if (answer1 && answer2 && answer3 && answer4)
             {
                 MessageBox.Show("Your account has been created.", "Notifcation");
+                this.Close();
             }
             else
             {
