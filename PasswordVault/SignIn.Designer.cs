@@ -36,6 +36,7 @@
             this.btnSignIn = new System.Windows.Forms.Button();
             this.lblTitle = new System.Windows.Forms.Label();
             this.lblForgotPassword = new System.Windows.Forms.Label();
+            this.userTableTableAdapter1 = new PasswordVaultNS.VaultDBDataSetTableAdapters.UserTableTableAdapter();
             this.SuspendLayout();
             // 
             // txtUsername
@@ -110,6 +111,10 @@
             this.lblForgotPassword.Text = "Click here if you forgot your password";
             this.lblForgotPassword.Click += new System.EventHandler(this.lblForgotPassword_Click);
             // 
+            // userTableTableAdapter1
+            // 
+            this.userTableTableAdapter1.ClearBeforeFill = true;
+            // 
             // frmSignIn
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -125,6 +130,7 @@
             this.Controls.Add(this.txtUsername);
             this.Name = "frmSignIn";
             this.Text = "Password Vault - Sign In";
+            this.Load += new System.EventHandler(this.frmSignIn_Load);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -140,6 +146,7 @@
         private System.Windows.Forms.Button btnSignIn;
         private System.Windows.Forms.Label lblTitle;
         private System.Windows.Forms.Label lblForgotPassword;
+        private VaultDBDataSetTableAdapters.UserTableTableAdapter userTableTableAdapter1;
     }
 }
 

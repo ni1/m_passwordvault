@@ -3,37 +3,23 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+
 using System.Text.RegularExpressions;
+using System.Data.SqlClient;
+using System.Net.Mail;
 
 namespace PasswordVaultNS
 {
     public class PasswordVault
     {
-        /// <summary>
-        /// The main entry point for the application.
-        /// </summary>
-        /// 
-
         private string _username;
         private string _password;
         private string _emailAddress;
         private string _passwordHint;
         private bool isEnabled = false;
 
-        //private string[,] passwordDB = new string[,] {
-        //                                            {"wei", "pass", "email", "hint"},
-        //                                            {"tom", "pass", "email", "hint"}
-        //                                        };
-        //passwordDB[0, 0] = "wei";
-        //passwordDB[0, 1] = "2";
-        //passwordDB[0, 2] = "3";
-        //passwordDB[0, 3] = "4";
-        //passwordDB[1, 0] = "tom";
-        //passwordDB[2, 1] = "2";
-        //passwordDB[3, 2] = "3";
-        //passwordDB[4, 3] = "4";
-        //private int count = 2;
-
+        public const string localDbString = @"Data Source=(LocalDB)\v11.0;AttachDbFilename=C:\Users\shu\Desktop\shu-cs604\passwordvault\PasswordVault\VaultDB.mdf;Integrated Security=True";
+       
         public PasswordVault()
         {
         }
@@ -46,64 +32,57 @@ namespace PasswordVaultNS
             _passwordHint = passwordHint;
         }
 
-
         public bool ValidateUserName(string username)
         {
-            bool isValidUser = false;
-            
-            if (_username == username)
+            if (_username.ToUpper() == username.ToUpper())
             {
-                isValidUser = true;
+                return true;
             }
-
-            return isValidUser;
+            return false;
         }
         
         public bool ValidateComplexUserName(string username)
         {
-            bool isAllowed = false;
-            bool isWhiteSpace = true;
+            bool isWhiteSpace = String.IsNullOrWhiteSpace(username);
 
-            isWhiteSpace = String.IsNullOrWhiteSpace(username);
-            if (isWhiteSpace == false && username.Length > 2)
+            if (isWhiteSpace == false && username.Length > 1)
             {
-                isAllowed = true;
+                return true;
             }
-
-            return isAllowed;
+            return false;
         }
 
         public bool ValidatePassword(string password)
         {
-            bool isAllowed = false;
-            
             if (_password == password)
             {
-                isAllowed = true;
+                return true;
             }
-
-            return isAllowed;
-
+            return false;
         }
 
         public bool ValidateComplexPassword(string password)
         {
-            bool isAllowed = false;
-
-            // test for password complexity; at least 1 digit, 1 uppercase char, and 1 lowercase char
             if (password.Length >= 8 &&
                 password.Count(c => char.IsDigit(c)) >= 1 &&
                 password.Count(c => char.IsUpper(c)) >= 1 &&
                 password.Count(c => char.IsLower(c)) >= 1)
             {
-                isAllowed = true;
+                return true;
             }
-
-            return isAllowed;
+            return false;
         }
 
-
         public bool ValidateEmailAddress(string email)
+        {
+            if (_emailAddress == email)
+            {
+                return true;
+            }
+            return false;
+        }
+
+        public bool ValidateComplexEmailAddress(string email)
         {
             //source: http://haacked.com/archive/2007/08/21/i-knew-how-to-validate-an-email-address-until-i.aspx/
             string pattern = @"^(?!\.)(""([^""\r\\]|\\[""\r\\])*""|"
@@ -116,64 +95,171 @@ namespace PasswordVaultNS
 
         public bool ValidateUserNameAndPassword(string username, string password)
         {
-            bool isAllowedAccess = false;
-
-            if (_username == username && _password == password)
+            if (_username.ToUpper() == username.ToUpper() && _password == password)
             {
-                isAllowedAccess = true;
+                return true;
             }
-            
-            return isAllowedAccess;
-            
+            return false;
         }
 
         public bool ValidatePasswordHint(string passwordHint)
         {
-            bool isAllowed = false;
-
             if (_passwordHint == passwordHint)
             {
-                isAllowed = true;
+                return true;
             }
-
-            return isAllowed;
+            return false;
         }
 
         public bool ValidateComplexPasswordHint(string passwordHint)
         {
-            bool isAllowed = false;
-            bool isWhiteSpace = true;
-            isWhiteSpace = String.IsNullOrWhiteSpace(passwordHint);
+            bool isWhiteSpace = String.IsNullOrWhiteSpace(passwordHint);
 
             if (isWhiteSpace == false && passwordHint.Length > 0)
             {
-                isAllowed = true;
+                return true;
             }
-
-            return isAllowed;
+            return false;
         }
 
-
-        public void AddNewUser(string username, string password, string email, string passwordHint)
+        public bool SendEmailNewAccount(EmailNotification emailObject)
         {
-            //passwordDB[count, 0] = username;
-            //passwordDB[count, 1] = password;
-            //passwordDB[count, 2] = email;
-            //passwordDB[count, 3] = passwordHint;
-            //count++;
-
+            emailObject.SendEmail();
+            return true;
         }
 
-        public void NewAccount()
+        public bool SendEmailForgotPassword(EmailNotification emailObject)
         {
-            
+            emailObject.SendEmail();
+            return true;
         }
 
-        public void ExistingAccount()
+
+        public bool CreateNewAccountService()
         {
-            
+            bool successful = false;
+
+            if (ValidateComplexUserName(_username) && 
+                ValidateComplexPassword(_password) &&
+                ValidateComplexEmailAddress(_emailAddress) &&
+                ValidateComplexPasswordHint(_passwordHint))
+            {
+                successful = InsertNewAccountToLocalDB(localDbString);
+            }
+            return successful;
         }
 
+        public bool AccountSignInService(string username, string password)
+        {
+            string result = "";
+            bool successful = false;
+
+            if (ValidateComplexUserName(username) &&
+                ValidateComplexPassword(password))
+            {
+                result = RetrieveAccountInfoFromLocalDb(username, localDbString);
+                if (result == password)
+                {
+                    successful = true;
+                }
+            }
+            return successful;
+        }
+        
+        public bool ForgotPasswordService(string email)
+        {
+            string result;
+
+            if (ValidateComplexEmailAddress(email))
+            {
+                result = RetrievePasswordHintFromLocalDb(email, localDbString);
+                return true;
+            }
+            return false;
+        }
+
+        private bool InsertNewAccountToLocalDB(string connectionString)
+        {
+            bool successful = false;
+            string queryString = "INSERT INTO dbo.[UserTable] (MasterPassword, PasswordHint, UserEmail, UserName) VALUES (@MasterPassword, @PasswordHint, @UserEmail, @UserName);";
+
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                SqlCommand command = new SqlCommand(queryString);
+                command.Connection = connection;
+                command.Parameters.AddWithValue("@MasterPassword", _password);
+                command.Parameters.AddWithValue("@PasswordHint", _passwordHint);
+                command.Parameters.AddWithValue("@UserEmail", _emailAddress);
+                command.Parameters.AddWithValue("@UserName", _username);
+                connection.Open();
+
+                command.ExecuteNonQuery();
+                successful = true;
+
+                command.Dispose();
+                connection.Dispose();
+            }
+            return successful;
+        }
+
+        private string RetrieveAccountInfoFromLocalDb(string username, string connectionString)
+        {
+            string result = "";
+            string queryString = "SELECT * FROM dbo.[UserTable] WHERE UserName = @UserName;";
+
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                SqlCommand command = new SqlCommand(queryString);
+                command.Connection = connection;
+                command.Parameters.AddWithValue("@UserName", username);
+                connection.Open();
+
+                SqlDataReader reader = command.ExecuteReader();
+
+                if (reader.HasRows)
+                {
+                    while (reader.Read())
+                    {
+                        result = reader.GetString(reader.GetOrdinal("MasterPassword"));
+                    }
+                }
+
+                reader.Close();
+                command.Dispose();
+                connection.Dispose();
+            }
+            return result;
+        }
+
+        private string RetrievePasswordHintFromLocalDb(string email, string connectionString)
+        {
+            string result = "";
+            string queryString = "SELECT * FROM dbo.[UserTable] WHERE UserEmail = @UserEmail;";
+
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                SqlCommand command = new SqlCommand(queryString);
+                command.Connection = connection;
+                command.Parameters.AddWithValue("@UserEmail", email);
+                connection.Open();
+
+                SqlDataReader reader = command.ExecuteReader();
+
+                if (reader.HasRows)
+                {
+                    while (reader.Read())
+                    {
+                        result = reader.GetString(reader.GetOrdinal("PasswordHint"));
+                    }
+
+                }
+
+                reader.Close();
+                command.Dispose();
+                connection.Dispose();
+            }
+            return result;
+        }
 
         [STAThread]
         public static void Main()
@@ -183,20 +269,11 @@ namespace PasswordVaultNS
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new frmSignIn());
-            
+        }
 
-            PasswordVault pv = new PasswordVault();
-            //pv.passwordDB[0, 0] = "wei";
-            //pv.passwordDB[0, 1] = "2";
-            //pv.passwordDB[0, 2] = "3";
-            //pv.passwordDB[0, 3] = "4";
-            //pv.passwordDB[1, 0] = "tom";
-            //pv.passwordDB[2, 1] = "2";
-            //pv.passwordDB[3, 2] = "3";
-            //pv.passwordDB[4, 3] = "4";
-
-            //pv.CheckLogin("user", "pass");
-            
+        public void Dispose()
+        {
+            throw new NotImplementedException();
         }
     }
 }

@@ -7,39 +7,15 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Data.SqlClient;
 
 namespace PasswordVaultNS
 {
     public partial class frmSignIn : Form
     {
-        private string username;
-        private string password;
-        private int numAttempts = 0;
-
-        public List<string> Roles { get; set; }
-        public bool isEnabled { get; set; }
-
         public frmSignIn()
         {
             InitializeComponent();
-        }
-
-        
-        
-        // Default Constructor
-        public void User()
-        {
-            username = string.Empty;
-            password = string.Empty;
-
-            Roles = new List<string>();
-            isEnabled = false;
-        }
-
-        public void clearText()
-        {
-            txtUsername.Text = "";
-            txtPassword.Text = "";
         }
 
         private void btnCreateAnAccount_Click(object sender, EventArgs e)
@@ -50,31 +26,34 @@ namespace PasswordVaultNS
 
         private void btnSignIn_Click(object sender, EventArgs e)
         {
-            string _username = "";
-            string _password = "";
+            string username = txtUsername.Text;
+            string password = txtPassword.Text;
+            PasswordVault pv = new PasswordVault();
 
-            _username = txtUsername.Text;
-            _password = txtPassword.Text;
-
-            if (_username == "user" && _password == "pass")
+            if (pv.AccountSignInService(username, password))
             {
-                Form1 form1 = new Form1();
+                Vault form1 = new Vault();
                 form1.Show();
                 this.Hide();
             }
             else
             {
                 MessageBox.Show("The username or password is incorrect.", "Error");
-                clearText();
-                numAttempts++;
             }
-            clearText();
+
+            txtUsername.Text = "";
+            txtPassword.Text = "";
         }
 
         private void lblForgotPassword_Click(object sender, EventArgs e)
         {
             frmForgotPassword frmPF = new frmForgotPassword();
             frmPF.ShowDialog();
+        }
+
+        private void frmSignIn_Load(object sender, EventArgs e)
+        {
+            
         }
     }
 }

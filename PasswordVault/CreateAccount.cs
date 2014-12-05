@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Data.SqlClient;
 
 namespace PasswordVaultNS
 {
@@ -28,24 +29,17 @@ namespace PasswordVaultNS
             string password = txtPassword.Text;
             string email = txtEmail.Text;
             string passwordHint = txtPasswordHint.Text;
-            bool answer1, answer2, answer3, answer4 = false;
-            PasswordVault pv = new PasswordVault();
+            PasswordVault pv = new PasswordVault(username, password, email, passwordHint);
 
-            answer1 = pv.ValidateComplexUserName(username);
-            answer2 = pv.ValidateComplexPassword(password);
-            answer3 = pv.ValidateEmailAddress(email);
-            answer4 = pv.ValidateComplexPasswordHint(passwordHint);
-
-
-            if (answer1 && answer2 && answer3 && answer4)
+            if (pv.CreateNewAccountService())
             {
-                MessageBox.Show("Your account has been created.", "Notifcation");
+                MessageBox.Show("Your account has been created. You should receive a confirmation in email shortly.", "Notifcation");
             }
             else
             {
                 MessageBox.Show("There is a error with the information you provided.", "Error");
-            }
-            
+            }            
         }
+
     }
 }

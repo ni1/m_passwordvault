@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Data.SqlClient;
 
 namespace PasswordVaultNS
 {
@@ -25,16 +26,16 @@ namespace PasswordVaultNS
         private void btnEmailHint_Click(object sender, EventArgs e)
         {
             string email = txtEmail.Text;
-
             PasswordVault pv = new PasswordVault();
-            if (pv.ValidateEmailAddress(email))
+
+            if (pv.ForgotPasswordService(email))
             {
                 MessageBox.Show("Your password hint has been sent.", "Notification");
                 txtEmail.Text = "";
             }
             else
             {
-                MessageBox.Show("The email entered is invalid.", "Error");
+                MessageBox.Show("Please enter in a correct email address.", "Error");
             }
         }
     }
